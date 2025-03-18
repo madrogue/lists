@@ -4,7 +4,7 @@
   "start_url": "/lists/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0000FF",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "apple-mobile-web-app-capable": "yes",
   "apple-mobile-web-app-status-bar-style": "black-translucent",

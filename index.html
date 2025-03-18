@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lists</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" href="assets/images/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script> -->
+  <link rel="stylesheet" href="assets/css/all.min.css">
+  <script src="assets/js/handlebars.min.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div id="header-main" class="header">
+      <select id="listSelect"></select>
+      <button id="addList" class="add-btn"><i class="fas fa-add"></i></button>
+      <button id="editList"><i class="fas fa-edit"></i></button>
+      <button id="showSettings"><i class="fas fa-cog"></i></button>
+    </div>
+    <div id="list" class="list-container">
+      <div id="listContainer"></div>
+      <div class="add-item-container">
+        <input type="text" id="newItemInput" placeholder="Add item">
+        <button id="addNewItem" class="add-btn"><i class="fas fa-add"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit List Popup -->
+  <div id="popup-edit-list" class="popup">
+    <div class="popup-header">
+      <div class="popup-title">Edit List</div>
+      <button id="closeEditListPopup" class="close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="popup-content">
+      <label for="listName">Name:</label>
+      <input type="text" id="listName" placeholder="List name">
+      <label for="listColor">Color:</label>
+      <input type="color" id="listColor" name="listColor">
+      <button id="saveList" class="save-btn"><i class="fas fa-save"></i> Save</button>
+      <button id="deleteList" class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+
+  <!-- Settings Popup -->
+  <div id="popup-settings" class="popup">
+    <div class="popup-header">
+      <div class="popup-title">Settings</div>
+      <button id="closeSettingsPopup" class="close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="popup-content">
+      <button id="clearAll" class="delete-btn"><i class="fas fa-trash"></i> Clear all</button>
+      <button id="clearCompleted" class="delete-btn"><i class="fas fa-trash"></i> Clear completed</button>
+    </div>
+  </div>
+
+  <!-- Handlebars templates -->
+  <script id="list-template" type="text/x-handlebars-template">
+    <ul class="list">
+      {{#each items}}
+      <li class="list-item" draggable="true" data-index="{{@index}}">
+        <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{@index}}">
+        <span class="editable {{#if checked}}checked{{/if}}" data-index="{{@index}}">{{text}}</span>
+        <button class="delete-btn" data-index="{{@index}}"><i class="fas fa-trash"></i></button>
+      </li>
+      {{/each}}
+    </ul>
+  </script>
+
+  <!-- <script id="item-template" type="text/x-handlebars-template">
+    <li class="list-item" draggable="true" data-index="{{index}}">
+      <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{index}}">
+      <span class="editable {{#if checked}}checked{{/if}}" data-index="{{index}}">{{text}}</span>
+      <button class="delete-btn" data-index="{{index}}"><i class="fas fa-trash"></i></button>
+    </li>
+  </script> -->
+
+  <script id="item-edit-template" type="text/x-handlebars-template">
+    <input type="text" class="edit-input" data-index="{{index}}" value="{{text}}">
+    <button class="save-btn" data-index="{{index}}"><i class="fas fa-save"></i></button>
+  </script>
+
+  <script src="assets/js/app.js"></script>
+</body>
+
+</html>

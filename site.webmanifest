@@ -1,11 +1,13 @@
 {
   "name": "Lists",
   "short_name": "Lists",
-  "start_url": "/",
+  "start_url": "/lists/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0000FF",
   "orientation": "portrait",
+  "apple-mobile-web-app-capable": "yes",
+  "apple-mobile-web-app-status-bar-style": "black-translucent",
   "icons": [
     {
       "src": "assets/images/apple-touch-icon.png",

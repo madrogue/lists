@@ -18,10 +18,10 @@ h1 {
 
 .header {
   display: flex;
-  margin-top: 10px;
+  /* margin-top: 10px; */
 }
 
-.header input {
+.header select {
   flex: 1;
   padding: 10px;
   font-size: 16px;
@@ -119,10 +119,19 @@ ul {
   align-items: center;
   justify-content: space-between;
   /* padding: 10px 0; */
+
 }
 
 .list-item.drag-over {
   background-color: #333333;
+}
+
+.list-item .delete-btn {
+  display: none;
+}
+
+.list-item.show-delete .delete-btn {
+  display: inline-block;
 }
 
 /* .list-item input[type="checkbox"] {
@@ -135,6 +144,7 @@ ul {
 
 .list-item span {
   flex: 1;
+  padding: 10px 0px;
 }
 
 /* List item edit mode */

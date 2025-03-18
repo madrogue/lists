@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearCompletedButton = document.getElementById('clearCompleted');
   const closeEditListPopupButton = document.getElementById('closeEditListPopup');
   const closeSettingsPopupButton = document.getElementById('closeSettingsPopup');
+  const toggleDeleteButton = document.getElementById('toggleDelete');
 
   const listsKey = 'lists';
   const lastSelectedListKey = 'lastSelectedList';
@@ -288,6 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const index = e.target.dataset.index;
       saveItem(index);
     }
+  });
+
+  toggleDeleteButton.addEventListener('click', () => {
+    const listItems = listContainer.querySelectorAll('.list-item');
+    listItems.forEach(item => {
+      item.classList.toggle('show-delete');
+    });
   });
 
   listSelect.addEventListener('change', selectList);

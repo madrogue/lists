@@ -277,6 +277,19 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
   };
 
+  newItemInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      addItem();
+    }
+  });
+
+  listContainer.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.classList.contains('edit-input')) {
+      const index = e.target.dataset.index;
+      saveItem(index);
+    }
+  });
+
   listSelect.addEventListener('change', selectList);
   addListButton.addEventListener('click', addList);
   addNewItemButton.addEventListener('click', addItem);

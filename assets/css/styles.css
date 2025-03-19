@@ -142,9 +142,18 @@ ul {
   margin-right: 10px;
 }
 
-.list-item span {
+/* .list-item span {
   flex: 1;
   padding: 10px 0px;
+} */
+.list-item .editable {
+  flex-grow: 1;
+  padding: 10px 0px;
+}
+
+.list-item .grip {
+  margin-left: auto;
+  margin-right: 10px;
 }
 
 /* List item edit mode */

@@ -43,13 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderLists = () => {
-    listSelect.innerHTML = '';
-    for (const listKey in lists) {
-      const option = document.createElement('option');
-      option.value = listKey;
-      option.textContent = lists[listKey].name;
-      listSelect.appendChild(option);
-    }
+    populateListSelect();
     const lastSelectedList = localStorage.getItem(lastSelectedListKey) || listSelect.value;
     listSelect.value = lastSelectedList;
     loadListItems(lastSelectedList);
@@ -375,6 +369,35 @@ document.addEventListener('DOMContentLoaded', () => {
   showSettingsButton.addEventListener('click', () => showPopup('popup-settings'));
   closeEditListPopupButton.addEventListener('click', () => hidePopup('popup-edit-list'));
   closeSettingsPopupButton.addEventListener('click', () => hidePopup('popup-settings'));
+
+  const populateListSelect = () => {
+    const lists = JSON.parse(localStorage.getItem('lists')) || [];
+
+    // Clear existing options
+    listSelect.innerHTML = '';
+
+    // Populate the dropdown with options
+    Object.keys(lists).forEach((listKey) => {
+      const option = document.createElement('option');
+      option.value = listKey;
+      option.textContent = lists[listKey].name;
+      option.style.backgroundColor = lists[listKey].color;
+      option.style.color = getTextColor(lists[listKey].color);
+      listSelect.appendChild(option);
+    });
+  };
+
+  // Utility function to determine text color (black or white) for contrast
+  const getTextColor = (backgroundColor) => {
+    const rgb = parseInt(backgroundColor.slice(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+    return luminance > 186 ? '#000000' : '#ffffff';
+  };
 
   renderLists();
 });

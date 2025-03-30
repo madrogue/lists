@@ -24,6 +24,7 @@
       <button id="addList" class="add-btn"><i class="fas fa-add"></i></button>
       <button id="editList"><i class="fas fa-edit"></i></button>
       <button id="toggleDelete" class="delete-btn"><i class="fas fa-trash"></i></button>
+      <button id="toggleReorder" class="reorder-btn"><i class="fas fa-arrows-alt"></i></button>
       <button id="showSettings"><i class="fas fa-cog"></i></button>
     </div>
     <div id="list" class="list-container">
@@ -70,8 +71,10 @@
       <li class="list-item" draggable="true" data-index="{{@index}}">
         <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{@index}}">
         <span class="editable {{#if checked}}checked{{/if}}" data-index="{{@index}}">{{text}}</span>
-        <span class="grip"><i class="fas fa-grip-lines"></i></span>
+        <span class="grip hidden"><i class="fas fa-grip-lines"></i></span>
         <button class="delete-btn" data-index="{{@index}}"><i class="fas fa-trash"></i></button>
+        <button class="move-up-btn hidden" data-index="{{@index}}"><i class="fas fa-caret-up"></i></button>
+        <button class="move-down-btn hidden" data-index="{{@index}}"><i class="fas fa-caret-down"></i></button>
       </li>
       {{/each}}
     </ul>

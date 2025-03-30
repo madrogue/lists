@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeEditListPopupButton = document.getElementById('closeEditListPopup');
   const closeSettingsPopupButton = document.getElementById('closeSettingsPopup');
   const toggleDeleteButton = document.getElementById('toggleDelete');
+  const toggleReorderButton = document.getElementById('toggleReorder');
 
   const listsKey = 'lists';
   const lastSelectedListKey = 'lastSelectedList';
@@ -277,6 +278,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
   };
+
+  const moveItem = (fromIndex, toIndex) => {
+    const listKey = listSelect.value;
+    const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
+    if (toIndex >= 0 && toIndex < items.length) {
+      const [movedItem] = items.splice(fromIndex, 1);
+      items.splice(toIndex, 0, movedItem);
+      localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
+
+      // Update only the list items without hiding the move buttons
+      const moveButtonsVisible = !document.querySelector('.move-up-btn').classList.contains('hidden');
+      loadListItems(listKey);
+
+      // Re-enable move buttons if they were visible
+      if (moveButtonsVisible) {
+        const moveButtons = document.querySelectorAll('.move-up-btn, .move-down-btn, .grip');
+        moveButtons.forEach(button => button.classList.remove('hidden'));
+      }
+    }
+  };
+
+  toggleReorderButton.addEventListener('click', () => {
+    const isReorderEnabled = listContainer.classList.toggle('reorder-enabled');
+    const moveButtons = document.querySelectorAll('.move-up-btn, .move-down-btn, .grip');
+    moveButtons.forEach(button => button.classList.toggle('hidden', !isReorderEnabled));
+  });
+
+  listContainer.addEventListener('dragstart', (event) => {
+    if (event.target.classList.contains('grip')) {
+      // Ensure the move buttons and grip remain visible during drag
+      listContainer.classList.add('reorder-enabled');
+    }
+  });
+
+  listContainer.addEventListener('dragend', (event) => {
+    if (event.target.classList.contains('grip')) {
+      // Keep the reorder-enabled state intact after dragging
+      if (!listContainer.classList.contains('reorder-enabled')) {
+        listContainer.classList.add('reorder-enabled');
+      }
+    }
+  });
+
+  listContainer.addEventListener('click', (event) => {
+    if (event.target.closest('.move-up-btn')) {
+      const index = parseInt(event.target.closest('.move-up-btn').dataset.index, 10);
+      moveItem(index, index - 1);
+    } else if (event.target.closest('.move-down-btn')) {
+      const index = parseInt(event.target.closest('.move-down-btn').dataset.index, 10);
+      moveItem(index, index + 1);
+    }
+  });
 
   newItemInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {

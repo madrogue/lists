@@ -99,6 +99,47 @@ button:hover {
   background-color: #808080;
 }
 
+.move-up-btn,
+.move-down-btn {
+  background-color: transparent;
+  color: white;
+}
+
+.move-up-btn:hover,
+.move-down-btn:hover {
+  background-color: #0069d9;
+}
+
+/* Default state: hide move buttons and grip */
+.move-up-btn.hidden,
+.move-down-btn.hidden,
+.grip.hidden {
+  display: none;
+}
+
+/* When reorder is enabled, show move buttons and grip */
+.reorder-enabled .move-up-btn,
+.reorder-enabled .move-down-btn,
+.reorder-enabled .grip {
+  display: flex; /* Or inline-flex, depending on your layout */
+}
+
+/* Style for the grip to match the size of the move buttons */
+.grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  color: white;
+  cursor: grab;
+}
+
+.grip:hover {
+  background-color: #0069d9;
+}
+
 /*
   ========================================================================
   List styles
@@ -119,7 +160,7 @@ ul {
   align-items: center;
   justify-content: space-between;
   /* padding: 10px 0; */
-
+  height: 40px;
 }
 
 .list-item.drag-over {
@@ -242,4 +283,13 @@ ul {
 
 .popup-content button:hover {
   background-color: #0069d9;
+}
+
+/*
+  ========================================================================
+  Hidden styles
+  ========================================================================
+*/
+.hidden {
+  display: none;
 }

@@ -1,4 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Register a Handlebars helper to check equality
+  Handlebars.registerHelper('eq', function (a, b) {
+    return a.trim() === b.trim();
+  });
+
+  // Register a Handlebars helper to check if a string starts with a specific character
+  Handlebars.registerHelper('startsWith', function (text, char) {
+    return text.trim().startsWith(char);
+  });
+
+  // Register a Handlebars helper to title case a string
+  Handlebars.registerHelper('titleCase', function (text) {
+    return text.trim().charAt(0).toUpperCase() + text.trim().slice(1).toLowerCase();
+  });
+
+  // Register a Handlebars helper to capitalize the first character of a string
+  Handlebars.registerHelper('capitalizeFirst', function (text) {
+    return text.trim().charAt(0).toUpperCase() + text.trim().slice(1);
+  });
+
+  // Register a Handlebars helper to format the separator by removing the leading "-" and converting to title case
+  Handlebars.registerHelper('formatSeparator', function (text) {
+    let trimmedText = text.trim().substring(1).trim(); // Remove the leading "-"
+    if (trimmedText) {
+      // Title case
+      trimmedText = trimmedText
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+
+      trimmedText = ` ${trimmedText} `;
+    }
+    return trimmedText;
+  });
+
   const listSelect = document.getElementById('listSelect');
   const addListButton = document.getElementById('addList');
   const editListButton = document.getElementById('editList');

@@ -69,8 +69,12 @@
     <ul class="list">
       {{#each items}}
       <li class="list-item" draggable="true" data-index="{{@index}}">
-        <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{@index}}">
-        <span class="editable {{#if checked}}checked{{/if}}" data-index="{{@index}}">{{text}}</span>
+        {{#if (startsWith text "-")}}
+          <span class="editable separator-line" data-index="{{@index}}">──────────{{formatSeparator text}}──────────</span>
+        {{else}}
+          <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{@index}}">
+          <span class="editable {{#if checked}}checked{{/if}}" data-index="{{@index}}">{{capitalizeFirst text}}</span>
+        {{/if}}
         <span class="grip hidden"><i class="fas fa-grip-lines"></i></span>
         <button class="delete-btn" data-index="{{@index}}"><i class="fas fa-trash"></i></button>
         <button class="move-up-btn hidden" data-index="{{@index}}"><i class="fas fa-caret-up"></i></button>

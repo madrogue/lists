@@ -204,7 +204,7 @@ ul {
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-.list-item .editable:hover::after {
+.list-item:not(.separator) .editable:hover::after {
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   content: '\f303';
@@ -220,24 +220,34 @@ ul {
   font-size: 16px;
 }
 
-.list-item.separator {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #999;
-  font-style: italic;
-}
-
 .list-item.separator .separator-line {
   flex-grow: 1;
-  text-align: center;
-  color: #999;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  min-width: 0;
+  cursor: text;
 }
 
-.list-item.separator .grip,
-.list-item.separator .item-delete-btn {
-  pointer-events: auto;
+.list-item.separator .separator-line::before,
+.list-item.separator .separator-line::after {
+  content: '';
+  flex: 1 0 12px;
+  height: 1px;
+  background-color: #555;
+}
+
+.sep-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+  font-size: 0.85em;
+  color: #777;
+  pointer-events: none;
 }
 
 

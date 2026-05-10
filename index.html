@@ -80,7 +80,7 @@
       {{#each items}}
       <li class="list-item {{#if (startsWith text "-")}}separator{{/if}}" draggable="true" data-index="{{@index}}">
         {{#if (startsWith text "-")}}
-          <span class="editable separator-line" data-index="{{@index}}">──────────{{formatSeparator text}}──────────</span>
+          <span class="editable separator-line" data-index="{{@index}}"><span class="sep-title">{{formatSeparator text}}</span></span>
         {{else}}
           <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{@index}}">
           <span class="editable {{#if checked}}checked{{/if}}" data-index="{{@index}}">{{capitalizeFirst text}}</span>

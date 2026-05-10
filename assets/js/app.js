@@ -108,14 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (themeColorMeta) themeColorMeta.setAttribute('content', color);
   };
 
+  const isSeparator = (item) => item.text.trim().startsWith('-');
+
   const updateCompletionCount = (items) => {
     if (!completionCount) return;
-    const total = items.length;
+    const real = items.filter(i => !isSeparator(i));
+    const total = real.length;
     if (total === 0) {
       completionCount.textContent = '';
       return;
     }
-    const done = items.filter(i => i.checked).length;
+    const done = real.filter(i => i.checked).length;
     completionCount.textContent = `${done}/${total}`;
   };
 
@@ -175,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('listName').value = '';
     document.getElementById('listColor').value = getRandomColor();
     showPopup('popup-edit-list');
+    document.getElementById('listName').focus();
   };
 
   const editList = () => {
@@ -183,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('listName').value = lists[listKey].name;
     document.getElementById('listColor').value = lists[listKey].color;
     showPopup('popup-edit-list');
+    document.getElementById('listName').focus();
   };
 
   const saveList = () => {
@@ -477,6 +482,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (event.target.type === 'checkbox') {
       toggleItemChecked(index);
     }
+  });
+
+  document.getElementById('listName').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveList();
   });
 
   newItemInput.addEventListener('keydown', (e) => {

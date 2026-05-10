@@ -78,7 +78,7 @@
   <script id="list-template" type="text/x-handlebars-template">
     <ul class="list">
       {{#each items}}
-      <li class="list-item" draggable="true" data-index="{{@index}}">
+      <li class="list-item {{#if (startsWith text "-")}}separator{{/if}}" draggable="true" data-index="{{@index}}">
         {{#if (startsWith text "-")}}
           <span class="editable separator-line" data-index="{{@index}}">──────────{{formatSeparator text}}──────────</span>
         {{else}}

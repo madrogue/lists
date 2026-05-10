@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin: 0;
   padding: 0;
   background-color: #000000;
@@ -11,54 +11,39 @@ body {
   Header styles
   ========================================================================
 */
-h1 {
-  text-align: center;
-  color: #333;
-}
-
 .header {
   display: flex;
-  /* margin-top: 10px; */
+  border-bottom: 3px solid #000;
 }
 
-.header select {
+.header-select-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.list-color-swatch {
+  width: 6px;
+  align-self: stretch;
+  flex-shrink: 0;
+  background-color: #007bff;
+}
+
+.header-select-wrap select {
   flex: 1;
   padding: 10px;
   font-size: 16px;
+  min-width: 0;
 }
 
-/* Normalize the select element */
-/* #listSelect {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border-radius: 0;
-  border: 1px solid #ccc;
-  padding: 10px;
-  font-size: 16px;
-  background-color: #ffffff;
-  color: #000000;
-  position: relative;
-  background: #ffffff url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23000000" d="M2 0L0 2h4z"/></svg>') no-repeat right 10px center;
-  background-size: 10px 10px;
-} */
-
-/*
-  ========================================================================
-  Input styles
-  ========================================================================
-*/
-.dropdown {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.dropdown select {
-  width: 80%;
-  padding: 10px;
-  font-size: 16px;
+.completion-count {
+  font-size: 11px;
+  color: #888;
+  padding: 0 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /*
@@ -68,6 +53,8 @@ h1 {
 */
 button {
   padding: 10px 15px;
+  min-width: 44px;
+  min-height: 44px;
   font-size: 16px;
   background-color: #007bff;
   color: white;
@@ -126,6 +113,22 @@ button:hover {
   background-color: #0069d9;
 }
 
+/* Active state for mode-toggle buttons */
+#toggleDelete.active {
+  background-color: #ffffff;
+  color: #dc3545;
+}
+
+#toggleReorder.active {
+  background-color: #ffffff;
+  color: #007bff;
+}
+
+/* Inline confirmation state */
+button.confirming {
+  background-color: #dc3545;
+}
+
 /* Default state: hide move buttons and grip */
 .move-up-btn.hidden,
 .move-down-btn.hidden,
@@ -137,16 +140,15 @@ button:hover {
 .reorder-enabled .move-up-btn,
 .reorder-enabled .move-down-btn,
 .reorder-enabled .grip {
-  display: flex; /* Or inline-flex, depending on your layout */
+  display: flex;
 }
 
-/* Style for the grip to match the size of the move buttons */
 .grip {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  min-height: 44px;
   background-color: transparent;
   color: white;
   cursor: grab;
@@ -162,9 +164,9 @@ button:hover {
   ========================================================================
 */
 ul {
-  margin-block-end: 0px;
-  margin-block-start: 0px;
-  padding-inline-start: 0px;
+  margin-block-end: 0;
+  margin-block-start: 0;
+  padding-inline-start: 0;
 }
 
 .list {
@@ -175,42 +177,40 @@ ul {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* padding: 10px 0; */
-  height: 40px;
+  min-height: 44px;
 }
 
 .list-item.drag-over {
   background-color: #333333;
 }
 
-.list-item .delete-btn {
+.list-item .item-delete-btn {
   display: none;
 }
 
-.list-item.show-delete .delete-btn {
-  display: inline-block;
+.list-item.show-delete .item-delete-btn {
+  display: inline-flex;
+  align-items: center;
 }
-
-/* .list-item input[type="checkbox"] {
-  margin-right: 10px;
-} */
 
 .list-item input[type="checkbox"] {
   margin-right: 10px;
 }
 
-/* .list-item span {
-  flex: 1;
-  padding: 10px 0px;
-} */
 .list-item .editable {
   flex-grow: 1;
-  padding: 10px 0px;
+  padding: 10px 0;
+  cursor: text;
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-.list-item .grip {
-  margin-left: auto;
-  margin-right: 10px;
+.list-item .editable:hover::after {
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  content: '\f303';
+  opacity: 0.3;
+  margin-left: 6px;
+  font-size: 12px;
 }
 
 /* List item edit mode */
@@ -219,11 +219,6 @@ ul {
   padding: 5px;
   font-size: 16px;
 }
-
-/* .list-item.completed span {
-  text-decoration: line-through;
-  color: #999;
-} */
 
 .list-item.separator {
   display: flex;
@@ -238,29 +233,52 @@ ul {
   text-align: center;
   color: #999;
   pointer-events: none;
-  /* Prevent interaction with the separator line */
 }
 
 .list-item.separator .grip,
-.list-item.separator .delete-btn {
+.list-item.separator .item-delete-btn {
   pointer-events: auto;
-  /* Allow interaction with grip and delete button */
 }
+
 
 .checked {
   text-decoration: line-through;
   color: #999;
 }
 
+.empty-state {
+  text-align: center;
+  color: #555;
+  margin: 40px 16px;
+  font-size: 14px;
+}
+
 .add-item-container {
   display: flex;
   margin-top: 10px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
 .add-item-container input {
   flex: 1;
   padding: 10px;
   font-size: 16px;
+}
+
+/*
+  ========================================================================
+  Overlay
+  ========================================================================
+*/
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
 }
 
 /*
@@ -278,6 +296,7 @@ ul {
   padding: 5px;
   z-index: 1000;
   background-color: #333333;
+  min-width: 280px;
 }
 
 .popup-header {
@@ -297,35 +316,29 @@ ul {
 .popup-content {
   display: flex;
   flex-direction: column;
+  gap: 5px;
+  padding: 5px;
 }
 
 .popup-content label {
-  margin-bottom: 5px;
+  margin-bottom: 2px;
 }
 
 .popup-content input[type="text"],
 .popup-content input[type="color"] {
-  margin-bottom: 5px;
   padding: 5px;
   font-size: 16px;
 }
 
-.popup-content button {
-  padding: 10px 15px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: white;
+.popup-divider {
   border: none;
-  cursor: pointer;
-}
-
-.popup-content button:hover {
-  background-color: #0069d9;
+  border-top: 1px solid #555;
+  margin: 2px 0;
 }
 
 /*
   ========================================================================
-  Hidden styles
+  Hidden
   ========================================================================
 */
 .hidden {

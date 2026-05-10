@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
   <title>Lists</title>
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="icon" href="assets/images/favicon.ico" />
@@ -11,8 +12,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
   <link rel="manifest" href="site.webmanifest">
-  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> -->
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js"></script> -->
   <link rel="stylesheet" href="assets/css/all.min.css">
   <script src="assets/js/handlebars.min.js"></script>
 </head>
@@ -20,21 +19,27 @@
 <body>
   <div id="app">
     <div id="header-main" class="header">
-      <select id="listSelect"></select>
-      <button id="addList" class="add-btn"><i class="fas fa-add"></i></button>
-      <button id="editList"><i class="fas fa-edit"></i></button>
-      <button id="toggleDelete" class="delete-btn"><i class="fas fa-trash"></i></button>
-      <button id="toggleReorder" class="reorder-btn"><i class="fas fa-arrows-alt"></i></button>
-      <button id="showSettings"><i class="fas fa-cog"></i></button>
+      <div class="header-select-wrap">
+        <div id="listColorSwatch" class="list-color-swatch"></div>
+        <select id="listSelect"></select>
+        <span id="completionCount" class="completion-count"></span>
+      </div>
+      <button id="addList" class="add-btn" aria-label="Add list"><i class="fas fa-add"></i></button>
+      <button id="editList" aria-label="Edit list"><i class="fas fa-edit"></i></button>
+      <button id="toggleDelete" class="delete-btn" aria-label="Toggle delete mode"><i class="fas fa-trash"></i></button>
+      <button id="toggleReorder" class="reorder-btn" aria-label="Toggle reorder mode"><i class="fas fa-sort"></i></button>
+      <button id="showSettings" aria-label="Settings"><i class="fas fa-cog"></i></button>
     </div>
     <div id="list" class="list-container">
       <div id="listContainer"></div>
       <div class="add-item-container">
         <input type="text" id="newItemInput" placeholder="Add item">
-        <button id="addNewItem" class="add-btn"><i class="fas fa-add"></i></button>
+        <button id="addNewItem" class="add-btn" aria-label="Add item"><i class="fas fa-add"></i></button>
       </div>
     </div>
   </div>
+
+  <div id="overlay" class="overlay"></div>
 
   <!-- Edit List Popup -->
   <div id="popup-edit-list" class="popup">
@@ -59,8 +64,13 @@
       <button id="closeSettingsPopup" class="close-btn"><i class="fas fa-times"></i></button>
     </div>
     <div class="popup-content">
-      <button id="clearAll" class="delete-btn"><i class="fas fa-trash"></i> Clear all</button>
+      <button id="sortCompleted"><i class="fas fa-sort-down"></i> Sort completed to bottom</button>
       <button id="clearCompleted" class="delete-btn"><i class="fas fa-trash"></i> Clear completed</button>
+      <button id="clearAll" class="delete-btn"><i class="fas fa-trash"></i> Clear all</button>
+      <hr class="popup-divider">
+      <button id="exportData"><i class="fas fa-download"></i> Export JSON</button>
+      <button id="importData"><i class="fas fa-upload"></i> Import JSON</button>
+      <input type="file" id="importFileInput" accept=".json" style="display:none">
     </div>
   </div>
 
@@ -76,25 +86,17 @@
           <span class="editable {{#if checked}}checked{{/if}}" data-index="{{@index}}">{{capitalizeFirst text}}</span>
         {{/if}}
         <span class="grip hidden"><i class="fas fa-grip-lines"></i></span>
-        <button class="delete-btn" data-index="{{@index}}"><i class="fas fa-trash"></i></button>
-        <button class="move-up-btn hidden" data-index="{{@index}}"><i class="fas fa-caret-up"></i></button>
-        <button class="move-down-btn hidden" data-index="{{@index}}"><i class="fas fa-caret-down"></i></button>
+        <button class="delete-btn item-delete-btn" data-index="{{@index}}" aria-label="Delete item"><i class="fas fa-trash"></i></button>
+        <button class="move-up-btn hidden" data-index="{{@index}}" aria-label="Move up"><i class="fas fa-caret-up"></i></button>
+        <button class="move-down-btn hidden" data-index="{{@index}}" aria-label="Move down"><i class="fas fa-caret-down"></i></button>
       </li>
       {{/each}}
     </ul>
   </script>
 
-  <!-- <script id="item-template" type="text/x-handlebars-template">
-    <li class="list-item" draggable="true" data-index="{{index}}">
-      <input type="checkbox" {{#if checked}}checked{{/if}} data-index="{{index}}">
-      <span class="editable {{#if checked}}checked{{/if}}" data-index="{{index}}">{{text}}</span>
-      <button class="delete-btn" data-index="{{index}}"><i class="fas fa-trash"></i></button>
-    </li>
-  </script> -->
-
   <script id="item-edit-template" type="text/x-handlebars-template">
     <input type="text" class="edit-input" data-index="{{index}}" value="{{text}}">
-    <button class="save-btn" data-index="{{index}}"><i class="fas fa-save"></i></button>
+    <button class="save-btn" data-index="{{index}}" aria-label="Save item"><i class="fas fa-save"></i></button>
   </script>
 
   <script src="assets/js/app.js"></script>

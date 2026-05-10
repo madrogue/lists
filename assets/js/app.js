@@ -45,18 +45,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteListButton = document.getElementById('deleteList');
   const clearAllButton = document.getElementById('clearAll');
   const clearCompletedButton = document.getElementById('clearCompleted');
+  const sortCompletedButton = document.getElementById('sortCompleted');
+  const exportButton = document.getElementById('exportData');
+  const importButton = document.getElementById('importData');
+  const importFileInput = document.getElementById('importFileInput');
   const closeEditListPopupButton = document.getElementById('closeEditListPopup');
   const closeSettingsPopupButton = document.getElementById('closeSettingsPopup');
   const toggleDeleteButton = document.getElementById('toggleDelete');
   const toggleReorderButton = document.getElementById('toggleReorder');
+  const overlay = document.getElementById('overlay');
+  const colorSwatch = document.getElementById('listColorSwatch');
+  const completionCount = document.getElementById('completionCount');
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
   const listsKey = 'lists';
   const lastSelectedListKey = 'lastSelectedList';
   const defaultListName = 'Default';
-  const defaultListColor = '#0000FF';
+  const defaultListColor = '#0000ff';
 
   let lists = JSON.parse(localStorage.getItem(listsKey)) || {};
   let isNewList = false;
+  let isReorderEnabled = false;
+  let isDeleteEnabled = false;
+  let activePopupId = null;
 
   if (Object.keys(lists).length === 0) {
     const defaultListKey = generateUUID();
@@ -72,23 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const selectList = () => {
-    localStorage.setItem(lastSelectedListKey, listSelect.value);
-    loadListItems(listSelect.value);
-  };
-
-  const renderLists = () => {
-    populateListSelect();
-    const lastSelectedList = localStorage.getItem(lastSelectedListKey) || listSelect.value;
-    listSelect.value = lastSelectedList;
-    loadListItems(lastSelectedList);
-  };
-
-  const loadListItems = (listKey) => {
-    const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
-    const template = Handlebars.compile(document.getElementById('list-template').innerHTML);
-    listContainer.innerHTML = template({ items });
-    addDragAndDropHandlers();
+  const getTextColor = (backgroundColor) => {
+    const rgb = parseInt(backgroundColor.slice(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    return luminance > 186 ? '#000000' : '#ffffff';
   };
 
   const getRandomColor = () => {
@@ -98,6 +99,75 @@ document.addEventListener('DOMContentLoaded', () => {
       color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
+  };
+
+  const applyListAccent = (listKey) => {
+    const color = (lists[listKey] && lists[listKey].color) || '#000000';
+    document.getElementById('header-main').style.borderBottomColor = color;
+    if (colorSwatch) colorSwatch.style.backgroundColor = color;
+    if (themeColorMeta) themeColorMeta.setAttribute('content', color);
+  };
+
+  const updateCompletionCount = (items) => {
+    if (!completionCount) return;
+    const total = items.length;
+    if (total === 0) {
+      completionCount.textContent = '';
+      return;
+    }
+    const done = items.filter(i => i.checked).length;
+    completionCount.textContent = `${done}/${total}`;
+  };
+
+  const selectList = () => {
+    localStorage.setItem(lastSelectedListKey, listSelect.value);
+    loadListItems(listSelect.value);
+    applyListAccent(listSelect.value);
+  };
+
+  const renderLists = () => {
+    populateListSelect();
+    const lastSelectedList = localStorage.getItem(lastSelectedListKey) || listSelect.value;
+    listSelect.value = lastSelectedList;
+    loadListItems(lastSelectedList);
+    applyListAccent(lastSelectedList);
+  };
+
+  const loadListItems = (listKey) => {
+    const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
+
+    if (items.length === 0) {
+      listContainer.innerHTML = '<p class="empty-state">Nothing here. Add an item below.</p>';
+      updateCompletionCount([]);
+      return;
+    }
+
+    const template = Handlebars.compile(document.getElementById('list-template').innerHTML);
+    listContainer.innerHTML = template({ items });
+
+    if (isReorderEnabled) {
+      listContainer.classList.add('reorder-enabled');
+      listContainer.querySelectorAll('.move-up-btn, .move-down-btn, .grip').forEach(el => el.classList.remove('hidden'));
+    }
+
+    if (isDeleteEnabled) {
+      listContainer.querySelectorAll('.list-item').forEach(item => item.classList.add('show-delete'));
+    }
+
+    updateCompletionCount(items);
+    addDragAndDropHandlers();
+  };
+
+  const populateListSelect = () => {
+    listSelect.innerHTML = '';
+    Object.keys(lists).forEach((listKey) => {
+      const option = document.createElement('option');
+      option.value = listKey;
+      option.textContent = lists[listKey].name;
+      option.style.backgroundColor = lists[listKey].color;
+      option.style.color = getTextColor(lists[listKey].color);
+      listSelect.appendChild(option);
+    });
   };
 
   const addList = () => {
@@ -129,28 +199,29 @@ document.addEventListener('DOMContentLoaded', () => {
         renderLists();
         listSelect.value = newListKey;
         loadListItems(newListKey);
+        applyListAccent(newListKey);
       }
     } else {
-      if (newListName && newListName !== lists[listKey].name) {
-        lists[listKey].name = newListName;
-      }
+      if (newListName) lists[listKey].name = newListName;
       lists[listKey].color = listColor;
       localStorage.setItem(listsKey, JSON.stringify(lists));
       renderLists();
+      applyListAccent(listSelect.value);
     }
     localStorage.setItem(lastSelectedListKey, listSelect.value);
     hidePopup('popup-edit-list');
   };
 
   const deleteList = () => {
-    const listKey = listSelect.value;
-    if (confirm(`Are you sure you want to delete the list "${lists[listKey].name}"?`)) {
+    if (Object.keys(lists).length <= 1) return;
+    withInlineConfirm(deleteListButton, () => {
+      const listKey = listSelect.value;
       delete lists[listKey];
       localStorage.removeItem(`list-${listKey}`);
       localStorage.setItem(listsKey, JSON.stringify(lists));
       renderLists();
-    }
-    hidePopup('popup-edit-list');
+      hidePopup('popup-edit-list');
+    });
   };
 
   const addItem = () => {
@@ -179,7 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveItem = (index) => {
     const listKey = listSelect.value;
     const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
-    const itemText = listContainer.querySelector(`li[data-index="${index}"] .edit-input`).value.trim();
+    const editInput = listContainer.querySelector(`li[data-index="${index}"] .edit-input`);
+    if (!editInput) return;
+    const itemText = editInput.value.trim();
     if (itemText) {
       items[index].text = itemText;
       localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
@@ -203,34 +276,100 @@ document.addEventListener('DOMContentLoaded', () => {
     loadListItems(listKey);
   };
 
-  const clearAll = () => {
-    const listKey = listSelect.value;
-    if (confirm(`Are you sure you want to clear all items from the list "${lists[listKey].name}"?`)) {
-      localStorage.setItem(`list-${listKey}`, JSON.stringify([]));
-      loadListItems(listKey);
+  // Inline confirmation for high-stakes bulk actions.
+  // Each button tracks its own timer so multiple buttons work independently.
+  const withInlineConfirm = (button, action) => {
+    if (button.dataset.confirming === 'true') {
+      clearTimeout(parseInt(button.dataset.timerId, 10));
+      button.dataset.confirming = 'false';
+      button.classList.remove('confirming');
+      button.innerHTML = button.dataset.originalHtml;
+      action();
+    } else {
+      button.dataset.confirming = 'true';
+      button.dataset.originalHtml = button.innerHTML;
+      button.classList.add('confirming');
+      button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Confirm?';
+      const timer = setTimeout(() => {
+        button.dataset.confirming = 'false';
+        button.classList.remove('confirming');
+        button.innerHTML = button.dataset.originalHtml;
+      }, 3000);
+      button.dataset.timerId = String(timer);
     }
   };
 
+  const clearAll = () => {
+    withInlineConfirm(clearAllButton, () => {
+      const listKey = listSelect.value;
+      localStorage.setItem(`list-${listKey}`, JSON.stringify([]));
+      loadListItems(listKey);
+    });
+  };
+
   const clearCompleted = () => {
+    withInlineConfirm(clearCompletedButton, () => {
+      const listKey = listSelect.value;
+      const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
+      localStorage.setItem(`list-${listKey}`, JSON.stringify(items.filter(i => !i.checked)));
+      loadListItems(listKey);
+    });
+  };
+
+  const sortCompleted = () => {
     const listKey = listSelect.value;
     const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
-    const filteredItems = items.filter(item => !item.checked);
-    localStorage.setItem(`list-${listKey}`, JSON.stringify(filteredItems));
+    const sorted = [...items.filter(i => !i.checked), ...items.filter(i => i.checked)];
+    localStorage.setItem(`list-${listKey}`, JSON.stringify(sorted));
     loadListItems(listKey);
   };
 
+  const exportData = () => {
+    const allLists = JSON.parse(localStorage.getItem(listsKey)) || {};
+    const data = { [listsKey]: allLists };
+    Object.keys(allLists).forEach(key => {
+      data[`list-${key}`] = JSON.parse(localStorage.getItem(`list-${key}`)) || [];
+    });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lists-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        Object.keys(data).forEach(key => {
+          localStorage.setItem(key, JSON.stringify(data[key]));
+        });
+        lists = JSON.parse(localStorage.getItem(listsKey)) || {};
+        renderLists();
+      } catch (_) {
+        // invalid JSON file, ignore silently
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const showPopup = (popupId) => {
+    activePopupId = popupId;
     document.getElementById(popupId).style.display = 'block';
+    overlay.style.display = 'block';
   };
 
   const hidePopup = (popupId) => {
     document.getElementById(popupId).style.display = 'none';
+    overlay.style.display = 'none';
+    activePopupId = null;
   };
 
   const addDragAndDropHandlers = () => {
-    const listItems = listContainer.querySelectorAll('.list-item');
-    listItems.forEach(item => {
-      item.setAttribute('draggable', true);
+    listContainer.querySelectorAll('.list-item').forEach(item => {
       item.addEventListener('dragstart', handleDragStart);
       item.addEventListener('dragover', handleDragOver);
       item.addEventListener('dragleave', handleDragLeave);
@@ -242,50 +381,38 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragSrcEl = null;
 
   const handleDragStart = (e) => {
-    dragSrcEl = e.target;
+    dragSrcEl = e.target.closest('li');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', e.target.dataset.index);
-    e.target.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', dragSrcEl.dataset.index);
+    dragSrcEl.classList.add('dragging');
   };
 
   const handleDragOver = (e) => {
-    if (e.preventDefault) {
-      e.preventDefault();
-    }
+    e.preventDefault();
     const li = e.target.closest('li');
-    if (li) {
-      li.classList.add('drag-over');
-    }
+    if (li) li.classList.add('drag-over');
     e.dataTransfer.dropEffect = 'move';
     return false;
   };
 
   const handleDragLeave = (e) => {
     const li = e.target.closest('li');
-    if (li) {
-      li.classList.remove('drag-over');
-    }
+    if (li) li.classList.remove('drag-over');
   };
 
   const handleDrop = (e) => {
-    if (e.stopPropagation) {
-      e.stopPropagation();
-    }
+    e.stopPropagation();
     const li = e.target.closest('li');
-    if (li) {
-      li.classList.remove('drag-over');
-    }
-    if (dragSrcEl !== e.target) {
-      const srcIndex = dragSrcEl.dataset.index;
-      const targetIndex = e.target.closest('li').dataset.index;
-      reorderItems(srcIndex, targetIndex);
-      updateListOrder();
+    if (li) li.classList.remove('drag-over');
+    if (dragSrcEl && li && dragSrcEl !== li) {
+      reorderItems(dragSrcEl.dataset.index, li.dataset.index);
     }
     return false;
   };
 
   const handleDragEnd = (e) => {
-    e.target.classList.remove('dragging');
+    const li = e.target.closest('li');
+    if (li) li.classList.remove('dragging');
   };
 
   const reorderItems = (srcIndex, targetIndex) => {
@@ -297,17 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadListItems(listKey);
   };
 
-  const updateListOrder = () => {
-    const listKey = listSelect.value;
-    const items = [];
-    listContainer.querySelectorAll('.list-item').forEach((item, index) => {
-      const text = item.querySelector('.editable').textContent;
-      const checked = item.querySelector('input[type="checkbox"]').checked;
-      items.push({ text, checked });
-    });
-    localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
-  };
-
   const moveItem = (fromIndex, toIndex) => {
     const listKey = listSelect.value;
     const items = JSON.parse(localStorage.getItem(`list-${listKey}`)) || [];
@@ -315,124 +431,90 @@ document.addEventListener('DOMContentLoaded', () => {
       const [movedItem] = items.splice(fromIndex, 1);
       items.splice(toIndex, 0, movedItem);
       localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
-
-      // Update only the list items without hiding the move buttons
-      const moveButtonsVisible = !document.querySelector('.move-up-btn').classList.contains('hidden');
-      loadListItems(listKey);
-
-      // Re-enable move buttons if they were visible
-      if (moveButtonsVisible) {
-        const moveButtons = document.querySelectorAll('.move-up-btn, .move-down-btn, .grip');
-        moveButtons.forEach(button => button.classList.remove('hidden'));
-      }
+      loadListItems(listKey); // isReorderEnabled boolean preserves mode state
     }
   };
 
   toggleReorderButton.addEventListener('click', () => {
-    const isReorderEnabled = listContainer.classList.toggle('reorder-enabled');
-    const moveButtons = document.querySelectorAll('.move-up-btn, .move-down-btn, .grip');
-    moveButtons.forEach(button => button.classList.toggle('hidden', !isReorderEnabled));
+    isReorderEnabled = !isReorderEnabled;
+    if (isReorderEnabled && isDeleteEnabled) {
+      isDeleteEnabled = false;
+      toggleDeleteButton.classList.remove('active');
+      listContainer.querySelectorAll('.list-item').forEach(item => item.classList.remove('show-delete'));
+    }
+    toggleReorderButton.classList.toggle('active', isReorderEnabled);
+    listContainer.classList.toggle('reorder-enabled', isReorderEnabled);
+    listContainer.querySelectorAll('.move-up-btn, .move-down-btn, .grip').forEach(el => el.classList.toggle('hidden', !isReorderEnabled));
   });
 
-  listContainer.addEventListener('dragstart', (event) => {
-    if (event.target.classList.contains('grip')) {
-      // Ensure the move buttons and grip remain visible during drag
-      listContainer.classList.add('reorder-enabled');
+  toggleDeleteButton.addEventListener('click', () => {
+    isDeleteEnabled = !isDeleteEnabled;
+    if (isDeleteEnabled && isReorderEnabled) {
+      isReorderEnabled = false;
+      toggleReorderButton.classList.remove('active');
+      listContainer.classList.remove('reorder-enabled');
+      listContainer.querySelectorAll('.move-up-btn, .move-down-btn, .grip').forEach(el => el.classList.add('hidden'));
     }
-  });
-
-  listContainer.addEventListener('dragend', (event) => {
-    if (event.target.classList.contains('grip')) {
-      // Keep the reorder-enabled state intact after dragging
-      if (!listContainer.classList.contains('reorder-enabled')) {
-        listContainer.classList.add('reorder-enabled');
-      }
-    }
+    toggleDeleteButton.classList.toggle('active', isDeleteEnabled);
+    listContainer.querySelectorAll('.list-item').forEach(item => item.classList.toggle('show-delete', isDeleteEnabled));
   });
 
   listContainer.addEventListener('click', (event) => {
+    const li = event.target.closest('li');
+    if (!li) return;
+    const index = parseInt(li.dataset.index, 10);
+
     if (event.target.closest('.move-up-btn')) {
-      const index = parseInt(event.target.closest('.move-up-btn').dataset.index, 10);
       moveItem(index, index - 1);
     } else if (event.target.closest('.move-down-btn')) {
-      const index = parseInt(event.target.closest('.move-down-btn').dataset.index, 10);
       moveItem(index, index + 1);
+    } else if (event.target.closest('.item-delete-btn')) {
+      deleteItem(index);
+    } else if (event.target.classList.contains('editable')) {
+      editItem(index);
+    } else if (event.target.closest('.save-btn')) {
+      saveItem(index);
+    } else if (event.target.type === 'checkbox') {
+      toggleItemChecked(index);
     }
   });
 
   newItemInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      addItem();
-    }
+    if (e.key === 'Enter') addItem();
   });
 
   listContainer.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target.classList.contains('edit-input')) {
-      const index = e.target.dataset.index;
-      saveItem(index);
+      saveItem(e.target.dataset.index);
     }
-  });
-
-  toggleDeleteButton.addEventListener('click', () => {
-    const listItems = listContainer.querySelectorAll('.list-item');
-    listItems.forEach(item => {
-      item.classList.toggle('show-delete');
-    });
   });
 
   listSelect.addEventListener('change', selectList);
   addListButton.addEventListener('click', addList);
   addNewItemButton.addEventListener('click', addItem);
-  listContainer.addEventListener('click', (event) => {
-    const target = event.target;
-    const index = target.closest('li').dataset.index;
-    if (target.classList.contains('delete-btn')) {
-      deleteItem(index);
-    } else if (target.classList.contains('editable')) {
-      editItem(index);
-    } else if (target.classList.contains('save-btn')) {
-      saveItem(index);
-    } else if (target.type === 'checkbox') {
-      toggleItemChecked(index);
-    }
-  });
   saveListButton.addEventListener('click', saveList);
   deleteListButton.addEventListener('click', deleteList);
   clearAllButton.addEventListener('click', clearAll);
   clearCompletedButton.addEventListener('click', clearCompleted);
+  sortCompletedButton.addEventListener('click', sortCompleted);
+  exportButton.addEventListener('click', exportData);
+  importButton.addEventListener('click', () => importFileInput.click());
+  importFileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) importData(e.target.files[0]);
+    e.target.value = '';
+  });
   editListButton.addEventListener('click', editList);
   showSettingsButton.addEventListener('click', () => showPopup('popup-settings'));
   closeEditListPopupButton.addEventListener('click', () => hidePopup('popup-edit-list'));
   closeSettingsPopupButton.addEventListener('click', () => hidePopup('popup-settings'));
 
-  const populateListSelect = () => {
-    const lists = JSON.parse(localStorage.getItem('lists')) || [];
+  overlay.addEventListener('click', () => {
+    if (activePopupId) hidePopup(activePopupId);
+  });
 
-    // Clear existing options
-    listSelect.innerHTML = '';
-
-    // Populate the dropdown with options
-    Object.keys(lists).forEach((listKey) => {
-      const option = document.createElement('option');
-      option.value = listKey;
-      option.textContent = lists[listKey].name;
-      option.style.backgroundColor = lists[listKey].color;
-      option.style.color = getTextColor(lists[listKey].color);
-      listSelect.appendChild(option);
-    });
-  };
-
-  // Utility function to determine text color (black or white) for contrast
-  const getTextColor = (backgroundColor) => {
-    const rgb = parseInt(backgroundColor.slice(1), 16);
-    const r = (rgb >> 16) & 0xff;
-    const g = (rgb >> 8) & 0xff;
-    const b = rgb & 0xff;
-
-    const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-
-    return luminance > 186 ? '#000000' : '#ffffff';
-  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && activePopupId) hidePopup(activePopupId);
+  });
 
   renderLists();
 });

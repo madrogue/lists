@@ -404,6 +404,12 @@ ul {
   Shopping mode
   ========================================================================
 */
+#app.shopping-mode .list-item {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 #app.shopping-mode #addList,
 #app.shopping-mode #editList,
 #app.shopping-mode #toggleDelete,

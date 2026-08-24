@@ -362,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isShoppingMode) return;
     const li = e.target.closest('.list-item');
     if (!li || li.classList.contains('separator')) return;
+    e.preventDefault();
     longPressLi = li;
     longPressLi.classList.add('long-pressing');
     longPressStartX = e.clientX;
@@ -372,6 +373,10 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleItemChecked(index);
       if (navigator.vibrate) navigator.vibrate(30);
     }, LONG_PRESS_MS);
+  });
+
+  listContainer.addEventListener('contextmenu', (e) => {
+    if (isShoppingMode) e.preventDefault();
   });
 
   listContainer.addEventListener('pointermove', (e) => {

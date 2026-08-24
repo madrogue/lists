@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleDeleteButton = document.getElementById('toggleDelete');
   const toggleReorderButton = document.getElementById('toggleReorder');
   const overlay = document.getElementById('overlay');
+  const appEl = document.getElementById('app');
+  const shoppingModeToggle = document.getElementById('shoppingModeToggle');
   const colorSwatch = document.getElementById('listColorSwatch');
   const completionCount = document.getElementById('completionCount');
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
@@ -68,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let isReorderEnabled = false;
   let isDeleteEnabled = false;
   let activePopupId = null;
+  let isShoppingMode = false;
+  let wakeLock = null;
 
   if (Object.keys(lists).length === 0) {
     const defaultListKey = generateUUID();
@@ -280,6 +284,114 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(`list-${listKey}`, JSON.stringify(items));
     loadListItems(listKey);
   };
+
+  const requestWakeLock = async () => {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (_) {
+      wakeLock = null;
+    }
+  };
+
+  const releaseWakeLock = () => {
+    if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+  };
+
+  const enterShoppingMode = () => {
+    isShoppingMode = true;
+    appEl.classList.add('shopping-mode');
+    if (isReorderEnabled) {
+      isReorderEnabled = false;
+      toggleReorderButton.classList.remove('active');
+    }
+    if (isDeleteEnabled) {
+      isDeleteEnabled = false;
+      toggleDeleteButton.classList.remove('active');
+    }
+    if (activePopupId) hidePopup(activePopupId);
+    loadListItems(listSelect.value);
+    requestWakeLock();
+  };
+
+  const exitShoppingMode = () => {
+    isShoppingMode = false;
+    appEl.classList.remove('shopping-mode');
+    releaseWakeLock();
+  };
+
+  shoppingModeToggle.addEventListener('change', () => {
+    if (shoppingModeToggle.checked) enterShoppingMode();
+    else exitShoppingMode();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (isShoppingMode && document.visibilityState === 'visible' && !wakeLock) {
+      requestWakeLock();
+    }
+  });
+
+  // While shopping mode is on, block normal taps (checkbox, edit, delete, drag)
+  // on list items; only a long-press toggles completion.
+  const LONG_PRESS_MS = 550;
+  const LONG_PRESS_MOVE_THRESHOLD = 10;
+  let longPressTimer = null;
+  let longPressLi = null;
+  let longPressStartX = 0;
+  let longPressStartY = 0;
+
+  const clearLongPress = () => {
+    if (longPressTimer) clearTimeout(longPressTimer);
+    longPressTimer = null;
+    if (longPressLi) longPressLi.classList.remove('long-pressing');
+    longPressLi = null;
+  };
+
+  listContainer.addEventListener('click', (e) => {
+    if (isShoppingMode) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
+
+  listContainer.addEventListener('pointerdown', (e) => {
+    if (!isShoppingMode) return;
+    const li = e.target.closest('.list-item');
+    if (!li || li.classList.contains('separator')) return;
+    longPressLi = li;
+    longPressLi.classList.add('long-pressing');
+    longPressStartX = e.clientX;
+    longPressStartY = e.clientY;
+    longPressTimer = setTimeout(() => {
+      const index = parseInt(li.dataset.index, 10);
+      clearLongPress();
+      toggleItemChecked(index);
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, LONG_PRESS_MS);
+  });
+
+  listContainer.addEventListener('pointermove', (e) => {
+    if (!isShoppingMode || !longPressTimer) return;
+    if (Math.abs(e.clientX - longPressStartX) > LONG_PRESS_MOVE_THRESHOLD ||
+      Math.abs(e.clientY - longPressStartY) > LONG_PRESS_MOVE_THRESHOLD) {
+      clearLongPress();
+    }
+  });
+
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(evt =>
+    listContainer.addEventListener(evt, clearLongPress)
+  );
+
+  listContainer.addEventListener('dragstart', (e) => {
+    if (isShoppingMode) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
 
   // Inline confirmation for high-stakes bulk actions.
   // Each button tracks its own timer so multiple buttons work independently.
